@@ -32,10 +32,35 @@ if(node[:bridger][:enable_on_boot])
     )
     mode 0755
   end
+
+  if(node.platform == 'ubuntu')
+    template '/etc/init/bridger.conf' do
+      source 'bridger.upstart.erb'
+      mode 0644
+      variables(
+        :bridger_exec => '/usr/local/bin/bridger-init'
+      )
+    end
+  else
+    template '/etc/init.d/bridger' do
+      source 'bridger.init.erb'
+      mode 0755
+      variables(
+        :bridger_exec => '/usr/local/bin/bridger-init'
+      )
+    end
+  end
+end
+
+if(node[:bridger][:enable_data_bag])
+  bag = data_bag_item(node[:bridger][:data_bag], node[:bridger][:data_bag_item])
+  bridges = bag[node.name]
+else
+  bridges = ([node[:bridger]] + node[:bridger][:additionals])
 end
 
 # now check current state
-([node[:bridger]] + node[:bridger][:additionals]).each do |bridge|
+bridges.each do |bridge|
   # sanity checks
   if(bridge[:address] && bridge[:dhcp])
     raise "Bridge can only specify one of :address or :dhcp"
