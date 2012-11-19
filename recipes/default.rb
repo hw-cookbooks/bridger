@@ -52,20 +52,27 @@ if(node[:bridger][:enable_on_boot])
   end
 end
 
-if(node[:bridger][:enable_data_bag])
+if(node[:bridger][:data_bag_config])
   bag = data_bag_item(node[:bridger][:data_bag], node[:bridger][:data_bag_item])
-  bridges = bag[node.name]
+  if(bag['bridges'])
+    bridges = bag['bridges'][node.name]
+  end
 else
   bridges = ([node[:bridger]] + node[:bridger][:additionals])
 end
 
+Chef::Log.warn 'No bridges found for this node!' if bridges.nil? || bridges.empty?
+
 # now check current state
-bridges.each do |bridge|
+Array(bridges).each do |bridge|
+  bridge = Mash.new(bridge)
   # sanity checks
   if(bridge[:address] && bridge[:dhcp])
     raise "Bridge can only specify one of :address or :dhcp"
   elsif(bridge[:address].nil? && bridge[:dhcp].nil?)
     raise "Bridge must specify one of :address or :dhcp"
+  elsif(bridge[:gateway] && bridge[:network].nil?)
+    raise "Bridge must specify network when providing gateway"
   end
 
   # Lets build a bridge!
@@ -114,6 +121,19 @@ bridges.each do |bridge|
       action :nothing
       subscribes :run, resources(:execute => "bridger[create the bridge (#{bridge[:name]})]"), :immediately
     end
+    if(bridge[:gateway])
+      execute "bridger[add gateway (#{bridge[:name]} -> #{bridge[:gateway]})]" do
+        command "route add -net #{bridge[:network]} netmask #{bridge[:netmask]} gw #{bridge[:gateway]} dev #{bridge[:name]}"
+        subscribes :run, resources(:execute => "bridger[configure the bridge (#{bridge[:name]} - static)]"), :immediately
+        action :nothing
+      end
   end
   # YAY we built a bridge!
+end
+
+unless(Array(bridges).empty?)
+  execute "bridger[set default gateway (#{bridge[:name]} -> #{node[:bridger][:default_gateway]})]" do
+    command "route add default gw #{node[:bridger][:default_gateway]}"
+    not_if "route -n | grep #{node[:bridger][:default_gateway]} | grep UG"
+  end
 end
