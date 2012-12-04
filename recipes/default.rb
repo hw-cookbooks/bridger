@@ -7,13 +7,13 @@ if(node[:bridger][:enable_on_boot])
   file '/etc/bridger/bridge.cnf' do
     action :create
     content(
-      JSON.pretty_generate(
-        [{:interface => node[:bridger][:interface], :name => node[:bridger][:name], 
-        :dhcp => node[:bridger][:dhcp], :address => node[:bridger][:address],
-        :netmask => node[:bridger][:netmask], :gateway => node[:bridger][:gateway]
-        }] + node[:bridger][:additionals]
-      )
-    )
+            JSON.pretty_generate(
+                                 [{:interface => node[:bridger][:interface], :name => node[:bridger][:name],
+                                    :dhcp => node[:bridger][:dhcp], :address => node[:bridger][:address],
+                                    :netmask => node[:bridger][:netmask], :gateway => node[:bridger][:gateway]
+                                  }] + node[:bridger][:additionals]
+                                 )
+            )
     mode 0600
   end
 
@@ -24,12 +24,12 @@ if(node[:bridger][:enable_on_boot])
   template '/usr/local/bin/bridger-init' do
     source 'bridger.rb.erb'
     variables(
-      :config_file => '/etc/bridger/bridge.cnf',
-      :ruby_path => File.join(
-        RbConfig::CONFIG['bindir'],
-        RbConfig::CONFIG['ruby_install_name']
-      )
-    )
+              :config_file => '/etc/bridger/bridge.cnf',
+              :ruby_path => File.join(
+                                      RbConfig::CONFIG['bindir'],
+                                      RbConfig::CONFIG['ruby_install_name']
+                                      )
+              )
     mode 0755
   end
 
@@ -38,16 +38,16 @@ if(node[:bridger][:enable_on_boot])
       source 'bridger.upstart.erb'
       mode 0644
       variables(
-        :bridger_exec => '/usr/local/bin/bridger-init'
-      )
+                :bridger_exec => '/usr/local/bin/bridger-init'
+                )
     end
   else
     template '/etc/init.d/bridger' do
       source 'bridger.init.erb'
       mode 0755
       variables(
-        :bridger_exec => '/usr/local/bin/bridger-init'
-      )
+                :bridger_exec => '/usr/local/bin/bridger-init'
+                )
     end
   end
 end
@@ -127,13 +127,14 @@ Array(bridges).each do |bridge|
         subscribes :run, resources(:execute => "bridger[configure the bridge (#{bridge[:name]} - static)]"), :immediately
         action :nothing
       end
+    end
+    # YAY we built a bridge!
   end
-  # YAY we built a bridge!
-end
 
-unless(Array(bridges).empty?)
-  execute "bridger[set default gateway (#{bridge[:name]} -> #{node[:bridger][:default_gateway]})]" do
-    command "route add default gw #{node[:bridger][:default_gateway]}"
-    not_if "route -n | grep #{node[:bridger][:default_gateway]} | grep UG"
+  unless(Array(bridges).empty?)
+    execute "bridger[set default gateway (#{bridge[:name]} -> #{node[:bridger][:default_gateway]})]" do
+      command "route add default gw #{node[:bridger][:default_gateway]}"
+      not_if "route -n | grep #{node[:bridger][:default_gateway]} | grep UG"
+    end
   end
 end
