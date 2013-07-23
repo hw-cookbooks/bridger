@@ -1,0 +1,20 @@
+#
+# Author: Chris Roberts (<chris@hw-ops.com>)
+#
+# chkconfig: 345 99 1
+# Description: Bridger setup
+# Provides: bridger
+# Default-Start: 3 4 5
+
+[ -x <%= @bridger_exec %> ] || exit 1
+
+case "$1" in
+  start)
+    echo "Configuring bridges"
+    <%= @bridger_exec %> 
+    ;;
+  *)
+    echo "Usage: $0 {start}"
+    exit 1
+    ;;
+esac

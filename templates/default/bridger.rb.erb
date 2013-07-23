@@ -1,0 +1,33 @@
+#!<%= @ruby_path %>
+require 'rubygems' # in case we are on 1.8 (ugh!)
+require 'json'
+
+def system!(cmd)
+  unless(system(cmd))
+    raise "Command Failed! `#{cmd}`"
+  end
+end
+
+JSON.load(File.read('<%= @config_file %>')).each do |bridge|
+  unless(created_bridge = system("ip addr show #{bridge[:name]} > /dev/null 2>&1"))
+    system!("ifconfig #{bridge[:interface]} 0.0.0.0")
+    system!("brctl addbr #{bridge[:name]}")
+  end
+  Array(bridge[:interface]).each do |interface|
+    is_bridged = %x{
+      brctl show #{bridge[:name]} | grep #{bridge[:name]}
+    }.strip.split("\n").detect do |line|
+      line.split(/\s/).last == interface
+    end
+    unless(is_bridged)
+      system!("brctl addif #{bridge[:name]} #{interface}")
+    end
+  end
+  if(created_bridge)
+    if(bridge[:dhcp])
+      system!("dhclient #{bridge[:name]}")
+    else
+      system!("ifconfig #{bridge[:name]} #{bridge[:address]} netmask #{bridge[:netmask]}")
+    end
+  end
+end
