@@ -4,21 +4,21 @@ def whyrun_supported?
 end
 
 action :attach do
-  if @current_resource.attached
-    Chef::Log.info "#{ @new_resource } already attached - nothing to do."
+  if current_resource.attached
+    Chef::Log.info "#{ new_resource } already attached - nothing to do."
   else
-    execute "Attach interface #{@current_resource.interface_name} to bridge #{@current_resource.bridge_name}" do
-      command "brctl addif #{@current_resource.bridge_name} #{@current_resource.interface_name}"
+    execute "Attach interface #{current_resource.interface_name} to bridge #{current_resource.bridge_name}" do
+      command "brctl addif #{current_resource.bridge_name} #{current_resource.interface_name}"
     end
   end
 end
 
 action :detach do
-  unless @current_resource.attached
-    Chef::Log.info "#{ @current_resource } doesn't attached - can't delete."
+  unless current_resource.attached
+    Chef::Log.info "#{ current_resource } doesn't attached - can't delete."
   else
-    execute "Detach interface #{@current_resource.interface_name} from bridge #{@current_resource.bridge_name}" do
-      command "brctl delif #{@current_resource.bridge_name} #{@current_resource.interface_name}"
+    execute "Detach interface #{current_resource.interface_name} from bridge #{current_resource.bridge_name}" do
+      command "brctl delif #{current_resource.bridge_name} #{current_resource.interface_name}"
     end
   end
 end

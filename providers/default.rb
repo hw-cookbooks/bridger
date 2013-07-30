@@ -4,28 +4,28 @@ def whyrun_supported?
 end
 
 action :create do
-  if @current_resource.exists
-    Chef::Log.info "#{ @new_resource } already exists - nothing to do."
+  if current_resource.exists
+    Chef::Log.info "#{ new_resource } already exists - nothing to do."
   else
-    execute "create bridge #{@current_resource.bridge_name}" do
-      command "brctl addbr #{@current_resource.bridge_name}"
+    execute "create bridge #{current_resource.bridge_name}" do
+      command "brctl addbr #{current_resource.bridge_name}"
     end
 
-    ifconfig "Add ipv4 address to (#{@current_resource.bridge_name})" do
-      target @current_resource.ipv4_address
-      mask @current_resource.ipv4_netmask if @current_resource.ipv4_netmask
-      device @current_resource.bridge_name
-      only_if @current_resource.ipv4_address
+    ifconfig "Add ipv4 address to #{current_resource.bridge_name}" do
+      target current_resource.ipv4_address
+      mask current_resource.ipv4_netmask if current_resource.ipv4_netmask
+      device current_resource.bridge_name
+      only_if { current_resource.ipv4_address }
     end
   end
 end
 
 action :delete do
-  unless @current_resource.exists
-    Chef::Log.info "#{ @current_resource } doesn't exist - can't delete."
+  unless current_resource.exists
+    Chef::Log.info "#{ current_resource } doesn't exist - can't delete."
   else
-    execute "Delete bridge #{@current_resource.bridge_name}" do
-      command "brctl delbr #{@current_resource.bridge_name}"
+    execute "Delete bridge #{current_resource.bridge_name}" do
+      command "brctl delbr #{current_resource.bridge_name}"
     end
   end
 end
@@ -41,7 +41,7 @@ end
 
 private
 
-def bridge_exist?(name)
+def bridge_exists?(name)
   return true if bridges_interfaces[name]
   return false
 end
