@@ -17,13 +17,13 @@ package 'bridge-utils'
   end
 
   bridger_interface bridge[:interface] do
-    bidge_name bridge[:name]
-    only_if bridge[:interface]
+    bridge_name bridge[:name]
+    only_if { bridge[:interface] }
   end
 
   execute "bridger[configure the bridge (#{bridge[:name]} - dynamic)]" do
     command "dhclient #{bridge[:name]}"
-    only_if bridge[:dhcp]
+    only_if { bridge[:dhcp] }
   end
   # YAY we built a bridge!
 end
